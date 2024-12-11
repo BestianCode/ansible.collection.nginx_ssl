@@ -2,7 +2,6 @@
 
 # WebServer root directory for letsencrypt challenge
 letsencrypt_web_root: /var/www/letsencrypt
-letsencrypt_use_nginx_default_host_for_all_domains: false
 
 # You can set the CloudFlare API token here if you want to use it for DNS challenge
 #

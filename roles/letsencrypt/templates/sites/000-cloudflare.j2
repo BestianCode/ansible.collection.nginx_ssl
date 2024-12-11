@@ -1,38 +1,12 @@
-{% if letsencrypt_use_nginx_default_host_for_all_domains is defined and letsencrypt_use_nginx_default_host_for_all_domains %}
-    server {
-        listen      80 default_server;
-        listen [::]:80 default_server;
+###
+### LetsEncrypt challenge location
+###
 
-        server_name _;
-
-        location /.well-known/acme-challenge {
-            root {{ letsencrypt_web_root | default('/var/www/html') }};
-        }
-
-        location / {
-            return 404;
-        }
-    }
-{% else %}
-    server {
-        listen      80 default_server;
-        listen [::]:80 default_server;
-
-        server_name _;
-
-        location / {
-            return 403;
-        }
-    }
-
-{% if letsencrypt_domains is defined and letsencrypt_domains|length %}
-{% for x in letsencrypt_domains %}
-{% if x.name is defined and x.name | length > 0 and x.dns_provider != "cloudflare" %}
     server {
         listen      80;
         listen [::]:80;
 
-        server_name {{x.name}};
+        server_name _;
 
         location /.well-known/acme-challenge {
             root {{ letsencrypt_web_root | default('/var/www/html') }};
@@ -43,7 +17,6 @@
         }
     }
 
-{% endif %}
-{% endfor %}
-{% endif %}
-{% endif %}
+###
+###
+###
