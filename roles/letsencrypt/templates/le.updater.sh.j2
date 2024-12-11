@@ -1,0 +1,32 @@
+#!/bin/bash
+
+exec 4> >(logger -s -t $(basename $0))
+exec >&4
+exec 2>&4
+
+echo Start...
+
+{% if letsencrypt_domains is defined and letsencrypt_domains|length %}
+{% for x in letsencrypt_domains %}
+{% if x.name is defined and x.name | length > 0 and x.dns_provider == "cloudflare" %}
+    echo " --- --- === === --- --- "
+    echo " --- {{x.name}} {{x.email}} ---"
+    echo " --- --- === === --- --- "
+    certbot certonly --dns-cloudflare --dns-cloudflare-credentials /usr/local/etc/cloudflare.conf {{x.name}} --email {{x.email}} --preferred-challenges dns-01 --agree-tos -n --expand
+
+{% endif %}
+{% if x.name is defined and x.name | length > 0 and x.dns_provider != "cloudflare" %}
+    echo " --- --- === === --- --- "
+    echo " --- {{x.name}} {{x.email}} ---"
+    echo " --- --- === === --- --- "
+    certbot certonly --webroot -w {{ letsencrypt_web_root | default('/var/www/html') }} {{ x.name }} --email {{ x.email }} --agree-tos -n --expand
+
+{% endif %}
+{% endfor %}
+{% endif %}
+nginx -t
+ps ax | grep -i nginx | grep -v grep
+systemctl reload nginx
+ps ax | grep -i nginx | grep -v grep
+
+echo Finish...

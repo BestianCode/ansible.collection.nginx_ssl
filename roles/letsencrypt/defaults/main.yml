@@ -1,0 +1,26 @@
+---
+
+# WebServer root directory for letsencrypt challenge
+letsencrypt_web_root: /var/www/letsencrypt
+letsencrypt_use_nginx_default_host_for_all_domains: true
+
+# You can set the CloudFlare API token here if you want to use it for DNS challenge
+#
+# cloudflare_token: "abcdefghijklmnopqrstuvwxyz1234567890ABCD"
+#
+
+
+# List of domains to get SSL certificates for
+# You can specify email and DNS provider for each domain
+#
+# If DNS provider is not specified, HTTP challenge will be used for domain validation
+#
+# If DNS provider is set to "cloudflare", DNS challenge will be used for domain validation
+# don't forget to set cloudflare_token if you want to use CloudFlare DNS challenge
+#
+# letsencrypt_domains:
+#   - { name: "-d *.my.domain",          email: "my.email@gmail.com", dns_provider: "cloudflare" }
+#   - { name: "-d xxx.my.domain",        email: "my.email@gmail.com", dns_provider: "" }
+#   - { name: "-d {{ ansible_host }}",   email: "my.email@gmail.com", dns_provider: "" }
+#   - { name: "-d {{ xray_dns_name }}",  email: "my.email@gmail.com", dns_provider: "" }
+#   - { name: "-d {{ proxy_dns_name }}", email: "my.email@gmail.com", dns_provider: "" }

@@ -1,0 +1,76 @@
+- name: Install packages
+  ansible.builtin.package:
+    name: ['python3-certbot-dns-cloudflare','cron']
+    state: present
+    autoremove: yes
+
+- name: Create {{ letsencrypt_web_root }} directory
+  file: dest={{ letsencrypt_web_root }} state=directory owner={{ nginx_user }} group={{ nginx_group }} mode=0755
+
+- name: Deploy LE CloudFlare config
+  template:
+    src: "{{item.src}}"
+    dest: "{{item.dest}}"
+    mode: "{{item.mode}}"
+    owner: root
+    group: root
+    decrypt: "{{item.decrypt}}"
+  with_items:
+    - { src: "cloudflare.conf.j2",  dest: "/usr/local/etc/cloudflare.conf",            mode: "0600", decrypt: "no" }
+  when: cloudflare_token is defined
+
+- name: Deploy LE CloudFlare site files
+  template:
+    src: "{{item.src}}"
+    dest: "{{item.dest}}"
+    mode: "{{item.mode}}"
+    owner: root
+    group: root
+    decrypt: "{{item.decrypt}}"
+  with_items:
+    - { src: "000-cloudflare.j2",   dest: "/etc/nginx/sites-available/000-cloudflare", mode: "0644", decrypt: "no" }
+  when: letsencrypt_domains is defined
+
+- name: Ensure symlink for CloudFlare site exists
+  file:
+    src: /etc/nginx/sites-available/000-cloudflare
+    dest: /etc/nginx/sites-enabled/000-cloudflare
+    state: link
+    force: yes
+
+- name: Deploy LE Scripts
+  template:
+    src: "{{item.src}}"
+    dest: "{{item.dest}}"
+    mode: "{{item.mode}}"
+    owner: root
+    group: root
+    decrypt: "{{item.decrypt}}"
+  with_items:
+    - { src: "le.updater.sh.j2",    dest: "/usr/local/bin/le.updater.sh",     mode: "0755", decrypt: "no" }
+  when: letsencrypt_domains is defined
+
+- name: Cron Lets Encrypt
+  cron:
+    name: "Lets Encrypt"
+    minute: "0"
+    hour: "0"
+    job: "/usr/local/bin/le.updater.sh"
+  when: static_ssl_domain is not defined
+
+- name: Cron reload nginx
+  cron:
+    name: "Nginx reload"
+    minute: "0"
+    hour: "1"
+    job: "/usr/sbin/nginx -s reload"
+  when: static_ssl_domain is not defined
+
+- name: Certs updating
+  shell: /usr/local/bin/le.updater.sh
+  register: sOut
+  when: static_ssl_domain is not defined
+
+- debug:
+    var: sOut.stdout_lines
+  when: static_ssl_domain is not defined
