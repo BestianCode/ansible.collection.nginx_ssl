@@ -1,0 +1,35 @@
+---
+
+- name: Check Nginx Configuration
+  shell: /usr/sbin/nginx -t
+  changed_when: false
+  register: nginxCheck
+
+- debug:
+    var: nginxCheck.stdout_lines
+
+- name: Enable and reload Nginx service
+  service:
+    name: nginx
+    enabled: yes
+    state: reloaded
+  changed_when: false
+
+- name: Restart Nginx service
+  service:
+    name: nginx
+    enabled: yes
+    state: restarted
+  changed_when: false
+  when: nginx_restart is defined and nginx_restart=="yes"
+
+- name: Nginx service massage
+  debug:
+    msg: "Use --extra-vars='nginx_restart=yes' for restarting Nginx!"
+
+- name: Check nginx server status
+  shell: service nginx status
+  register: sOut
+
+- debug:
+    var: sOut.stdout_lines

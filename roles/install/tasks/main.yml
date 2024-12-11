@@ -1,0 +1,29 @@
+- name: Install packages
+  ansible.builtin.package:
+    name: nginx-full
+    state: present
+    autoremove: yes
+
+- name: Create /etc/nginx/ssl
+  file: dest=/etc/nginx/ssl state=directory owner=root group=root mode=0700
+
+- name: Check if /etc/nginx/ssl/dhparam.pem exists
+  stat:
+    path: /etc/nginx/ssl/dhparam.pem
+  register: dhparam_file
+
+- name: Generate /etc/nginx/ssl/dhparam.pem file
+  shell: openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
+  when: not dhparam_file.stat.exists
+
+- name: Deploy default configs
+  template:
+    src: "{{item.src}}"
+    dest: "{{item.dest}}"
+    mode: "{{item.mode}}"
+    owner: root
+    group: root
+    decrypt: "{{item.decrypt}}"
+  with_items:
+    - { src: "nginx.conf.j2",       dest: "/etc/nginx/nginx.conf",              mode: "0644", decrypt: "no" }
+    - { src: "sites/default.j2",    dest: "/etc/nginx/sites-available/default", mode: "0644", decrypt: "no" }
