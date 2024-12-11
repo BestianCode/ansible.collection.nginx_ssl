@@ -25,7 +25,7 @@
   shell: openssl req -new -newkey rsa:2048 -days 3650 -nodes -x509 \
         -keyout /etc/nginx/ssl/default.key \
         -out /etc/nginx/ssl/default.crt \
-        -subj "/CN=localhost"
+        -subj "/CN=fuck.off"
   when: not ssl_key_file.stat.exists
 
 - name: Deploy default configs
