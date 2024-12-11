@@ -28,7 +28,7 @@
     group: root
     decrypt: "{{item.decrypt}}"
   with_items:
-    - { src: "000-cloudflare.j2",   dest: "/etc/nginx/sites-available/000-cloudflare", mode: "0644", decrypt: "no" }
+    - { src: "sites/000-cloudflare.j2",   dest: "/etc/nginx/sites-available/000-cloudflare", mode: "0644", decrypt: "no" }
   when: letsencrypt_domains is defined
 
 - name: Ensure symlink for CloudFlare site exists
