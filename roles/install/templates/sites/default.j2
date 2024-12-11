@@ -21,21 +21,22 @@
         }
     }
 
+{% if catch_default_80 is defined and catch_default_80 %}
 ###### Block default http host to prevent accidental finding of the real site
-###
-### Commented out due to using LetsEncrypt for all sites
-###
-###    server {
-###        listen                   80 default_server;
-###        listen              [::]:80 default_server;
-###
-###        server_name         _;
-###
-###        location / {
-###            return  403;
-###        }
-###    }
 
+    server {
+        listen                   80 default_server;
+        listen              [::]:80 default_server;
+
+        server_name         _;
+
+        location / {
+            return  403;
+        }
+    }
+
+{% endif %}
+{% if catch_default_443 is defined and catch_default_443 %}
 ### Block default https host to prevent accidental finding of the real site
 
     server {
@@ -52,6 +53,7 @@
         }
     }
 
+{% endif %}
 ###
 ### Please, don't use a DEFAULT file for your site. It's a bad practice.
 ### Create a new file for your site and include it in the sites-enabled directory.

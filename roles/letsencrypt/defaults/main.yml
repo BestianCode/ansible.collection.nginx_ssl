@@ -1,5 +1,8 @@
 ---
 
+# It's necessary disable catching of default port 80 by Nginx to make LE working
+catch_default_80: false
+
 # WebServer root directory for letsencrypt challenge
 letsencrypt_web_root: /var/www/letsencrypt
 

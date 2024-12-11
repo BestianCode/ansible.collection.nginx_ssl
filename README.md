@@ -63,6 +63,10 @@ And a sample `playbook`:
 ## Parameters
 
 ```yaml
+# It's necessary disable catching of default port 80 by Nginx to make LE working
+catch_default_80: false
+# It's necessary disable catching of default port 443 by Nginx to make Signal proxy working on default HTTPS port
+catch_default_443: false
 
 # You can set the CloudFlare API token here if you want to use it for DNS challenge
 cloudflare_token: "abcdefghijklmnopqrstuvwxyz1234567890ABCD"
