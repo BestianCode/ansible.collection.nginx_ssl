@@ -1,5 +1,8 @@
 ---
 
+nginx_user: www-data
+nginx_group: www-data
+
 # It's necessary disable catching of default port 80 by Nginx to make LE working
 catch_default_80: false
 

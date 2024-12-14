@@ -6,7 +6,7 @@
       - python3-certbot-dns-cloudflare
       - cron
     state: present
-    autoremove: yes
+    autoremove: true
 
 - name: Create {{ letsencrypt_web_root }} directory
   ansible.builtin.file:
@@ -28,7 +28,7 @@
     - { src: "cloudflare.conf.j2", dest: "/usr/local/etc/cloudflare.conf", mode: "0600", decrypt: "no" }
   when: cloudflare_token is defined
 
-- name: Execute Let's Encrypt related tasks
+- name: LE Related tasks
   when: letsencrypt_domains is defined
   block:
     - name: Deploy LE CloudFlare site files
@@ -47,7 +47,7 @@
         src: /etc/nginx/sites-available/000-cloudflare
         dest: /etc/nginx/sites-enabled/000-cloudflare
         state: link
-        force: yes
+        force: true
 
     - name: Deploy LE Scripts
       ansible.builtin.template:
@@ -77,7 +77,7 @@
     - name: Run Lets Encrypt updater script att 1
       ansible.builtin.command: /usr/local/bin/le.updater.sh
       register: le_update
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Display Lets Encrypt updater output
       ansible.builtin.debug:
@@ -86,7 +86,7 @@
     - name: List certs
       ansible.builtin.command: ls -l /etc/letsencrypt/live/
       register: certs_list
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Display certs list
       ansible.builtin.debug:
@@ -105,3 +105,4 @@
     - name: List certs
       ansible.builtin.command: ls -l /etc/letsencrypt/live/
       register: certs_list
+
