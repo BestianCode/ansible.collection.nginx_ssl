@@ -28,79 +28,80 @@
     - { src: "cloudflare.conf.j2", dest: "/usr/local/etc/cloudflare.conf", mode: "0600", decrypt: "no" }
   when: cloudflare_token is defined
 
-- name: Deploy LE CloudFlare site files
-  ansible.builtin.template:
-    src: "{{ item.src }}"
-    dest: "{{ item.dest }}"
-    mode: "{{ item.mode }}"
-    owner: root
-    group: root
-    decrypt: "{{ item.decrypt }}"
-  loop:
-    - { src: "sites/000-cloudflare.j2", dest: "/etc/nginx/sites-available/000-cloudflare", mode: "0644", decrypt: "no" }
+- name: Execute Let's Encrypt related tasks
   when: letsencrypt_domains is defined
+  block:
+    - name: Deploy LE CloudFlare site files
+      ansible.builtin.template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: "{{ item.mode }}"
+        owner: root
+        group: root
+        decrypt: "{{ item.decrypt }}"
+      loop:
+        - { src: "sites/000-cloudflare.j2", dest: "/etc/nginx/sites-available/000-cloudflare", mode: "0644", decrypt: "no" }
 
-- name: Ensure symlink for CloudFlare site exists
-  ansible.builtin.file:
-    src: /etc/nginx/sites-available/000-cloudflare
-    dest: /etc/nginx/sites-enabled/000-cloudflare
-    state: link
-    force: yes
+    - name: Ensure symlink for CloudFlare site exists
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/000-cloudflare
+        dest: /etc/nginx/sites-enabled/000-cloudflare
+        state: link
+        force: yes
 
-- name: Deploy LE Scripts
-  ansible.builtin.template:
-    src: "{{ item.src }}"
-    dest: "{{ item.dest }}"
-    mode: "{{ item.mode }}"
-    owner: root
-    group: root
-    decrypt: "{{ item.decrypt }}"
-  loop:
-    - { src: "le.updater.sh.j2", dest: "/usr/local/bin/le.updater.sh", mode: "0755", decrypt: "no" }
-  when: letsencrypt_domains is defined
+    - name: Deploy LE Scripts
+      ansible.builtin.template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: "{{ item.mode }}"
+        owner: root
+        group: root
+        decrypt: "{{ item.decrypt }}"
+      loop:
+        - { src: "le.updater.sh.j2", dest: "/usr/local/bin/le.updater.sh", mode: "0755", decrypt: "no" }
 
-- name: Cron Lets Encrypt
-  ansible.builtin.cron:
-    name: "Lets Encrypt"
-    minute: "0"
-    hour: "0"
-    job: "/usr/local/bin/le.updater.sh"
+    - name: Cron Lets Encrypt
+      ansible.builtin.cron:
+        name: "Lets Encrypt"
+        minute: "0"
+        hour: "0"
+        job: "/usr/local/bin/le.updater.sh"
 
-- name: Cron reload nginx
-  ansible.builtin.cron:
-    name: "Nginx reload"
-    minute: "0"
-    hour: "1"
-    job: "/usr/sbin/nginx -s reload"
+    - name: Cron reload nginx
+      ansible.builtin.cron:
+        name: "Nginx reload"
+        minute: "0"
+        hour: "1"
+        job: "/usr/sbin/nginx -s reload"
 
-- name: Run Lets Encrypt updater script att 1
-  ansible.builtin.command: /usr/local/bin/le.updater.sh
-  register: le_update
-  ignore_errors: yes
+    - name: Run Lets Encrypt updater script att 1
+      ansible.builtin.command: /usr/local/bin/le.updater.sh
+      register: le_update
+      ignore_errors: yes
 
-- name: Display Lets Encrypt updater output
-  ansible.builtin.debug:
-    var: le_update.stdout_lines
+    - name: Display Lets Encrypt updater output
+      ansible.builtin.debug:
+        var: le_update.stdout_lines
 
-- name: List certs
-  ansible.builtin.command: ls -l /etc/letsencrypt/live/
-  register: certs_list
-  ignore_errors: yes
+    - name: List certs
+      ansible.builtin.command: ls -l /etc/letsencrypt/live/
+      register: certs_list
+      ignore_errors: yes
 
-- name: Display certs list
-  ansible.builtin.debug:
-    var: certs_list.stdout_lines
+    - name: Display certs list
+      ansible.builtin.debug:
+        var: certs_list.stdout_lines
 
-- name: Run Lets Encrypt updater script att 2
-  ansible.builtin.command: /usr/local/bin/le.updater.sh
-  register: le_update
-  changed_when: "'success' in le_update.stdout"
-  failed_when: le_update.rc != 0
+    - name: Run Lets Encrypt updater script att 2
+      ansible.builtin.command: /usr/local/bin/le.updater.sh
+      register: le_update
+      changed_when: "'success' in le_update.stdout"
+      failed_when: le_update.rc != 0
 
-- name: Display Lets Encrypt updater output
-  ansible.builtin.debug:
-    var: le_update.stdout_lines
+    - name: Display Lets Encrypt updater output
+      ansible.builtin.debug:
+        var: le_update.stdout_lines
 
-- name: List certs
-  ansible.builtin.command: ls -l /etc/letsencrypt/live/
-  register: certs_list
+    - name: List certs
+      ansible.builtin.command: ls -l /etc/letsencrypt/live/
+      register: certs_list
