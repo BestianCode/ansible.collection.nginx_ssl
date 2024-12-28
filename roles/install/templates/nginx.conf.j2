@@ -77,7 +77,7 @@ http {
 }
 
 stream {
-    log_format          stream_log '$remote_addr [$time_local] $protocol $status $bytes_sent $bytes_received $session_time';
+    log_format          stream_log '$remote_addr [$time_local] $protocol $status $bytes_sent $bytes_received $session_time $ssl_preread_server_name';
 
     access_log          /var/log/nginx/stream-access.log stream_log;
     error_log           /var/log/nginx/stream-error.log;
