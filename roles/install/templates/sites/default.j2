@@ -7,7 +7,7 @@
 
     server {
         listen              127.0.0.1:81 default_server;
-{% if nginx_ipv6 | default(true) %}
+{% if nginx_ipv6 | default(false) %}
         listen              [::1]:81 default_server;
 {% endif %}
 
