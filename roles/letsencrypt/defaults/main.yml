@@ -29,3 +29,8 @@ letsencrypt_web_root: /var/www/letsencrypt
 #   - { name: "-d {{ ansible_host }}",   email: "my.email@gmail.com", dns_provider: "" }
 #   - { name: "-d {{ xray_dns_name }}",  email: "my.email@gmail.com", dns_provider: "" }
 #   - { name: "-d {{ proxy_dns_name }}", email: "my.email@gmail.com", dns_provider: "" }
+
+#
+# Do not deploy nginx site for CloudFlare
+#
+#cloudflare_no_site: true
