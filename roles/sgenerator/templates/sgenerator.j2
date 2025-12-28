@@ -141,3 +141,14 @@
     }
 {% endfor %}
 {% endif %}
+
+{% if nginx_frontend_configurations_raw is defined %}
+###
+### RAW FRONTEND CONFIGURATIONS
+###
+{% for x in nginx_frontend_configurations_raw %}
+
+{{ x }}
+
+{% endfor %}
+{% endif %}
