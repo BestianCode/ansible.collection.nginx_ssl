@@ -1,6 +1,35 @@
 {% if nginx_frontend_configurations is defined %}
 {% for x in nginx_frontend_configurations %}
 
+{% set _upstream_name = ('sg_upstream_' ~ loop.index0 ~ '_' ~ (x.dns | regex_replace('[^A-Za-z0-9_]', '_'))) %}
+{% set _backend_port = (x.backend_port if x.backend_port is defined else none) %}
+
+{% if x.backend is defined and (x.backend is sequence) and (x.backend is not string) %}
+    upstream {{ _upstream_name }} {
+{% for b in x.backend %}
+{% if b is mapping %}
+{% if b.address is defined %}
+{% set _addr = b.address %}
+{% if _backend_port is not none and (_addr | regex_search(':[0-9]+$')) is not truthy %}
+{% set _addr = (_addr ~ ':' ~ _backend_port) %}
+{% endif %}
+    server {{ _addr }}{% if b.params is defined %} {{ b.params }}{% endif %};
+{% elif b.host is defined and b.port is defined %}
+        server {{ b.host }}:{{ b.port }}{% if b.params is defined %} {{ b.params }}{% endif %};
+{% elif b.host is defined and _backend_port is not none %}
+    server {{ b.host }}:{{ _backend_port }}{% if b.params is defined %} {{ b.params }}{% endif %};
+{% endif %}
+{% else %}
+{% set _addr = b %}
+{% if _backend_port is not none and (_addr | regex_search(':[0-9]+$')) is not truthy %}
+{% set _addr = (_addr ~ ':' ~ _backend_port) %}
+{% endif %}
+    server {{ _addr }};
+{% endif %}
+{% endfor %}
+    }
+{% endif %}
+
     server {
         listen                      443 ssl http2;
 
@@ -86,10 +115,27 @@
 
             proxy_buffering         off;
 
-            proxy_pass              {{x.mode}}://{{x.backend}};
+{% set _single_backend = x.backend %}
+{% if _backend_port is not none and (_single_backend is string) and (_single_backend | regex_search(':[0-9]+$')) is not truthy %}
+{% set _single_backend = (_single_backend ~ ':' ~ _backend_port) %}
+{% endif %}
+
+{% if x.backend is defined and (x.backend is sequence) and (x.backend is not string) %}
+            proxy_pass              {{x.mode}}://{{ _upstream_name }};
+{% else %}
+            proxy_pass              {{x.mode}}://{{ _single_backend }};
+{% endif %}
 {% endif %}
 {% if x.mode is defined and x.mode == 'grpc' %}
-            grpc_pass               {{x.mode}}://{{x.backend}};
+{% set _single_backend = x.backend %}
+{% if _backend_port is not none and (_single_backend is string) and (_single_backend | regex_search(':[0-9]+$')) is not truthy %}
+{% set _single_backend = (_single_backend ~ ':' ~ _backend_port) %}
+{% endif %}
+{% if x.backend is defined and (x.backend is sequence) and (x.backend is not string) %}
+            grpc_pass               grpc://{{ _upstream_name }};
+{% else %}
+            grpc_pass               {{x.mode}}://{{ _single_backend }};
+{% endif %}
 {% endif %}
         }
     }
