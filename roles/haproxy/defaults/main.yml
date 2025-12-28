@@ -1,0 +1,26 @@
+---
+
+# When set to "yes", tasks/main.yml will restart HAProxy (otherwise it reloads).
+#haproxy_restart: "no"
+
+# Extra HAProxy config stanzas appended verbatim after the global/defaults blocks.
+#
+# This is intentionally a list of raw strings so you can paste normal haproxy.cfg
+# fragments (frontend/backend/listen/userlist/etc).
+#
+# Keep it empty to deploy only the base config + local admin stats listener.
+haproxy_backend_configurations: []
+
+# Example:
+# haproxy_backend_configurations:
+#   - |
+#       frontend fe_https
+#           bind *:443
+#           mode tcp
+#           default_backend be_app
+#
+#       backend be_app
+#           mode tcp
+#           balance roundrobin
+#           server app1 10.0.0.10:443 check
+#           server app2 10.0.0.11:443 check

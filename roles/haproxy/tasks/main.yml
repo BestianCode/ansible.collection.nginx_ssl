@@ -1,0 +1,50 @@
+- name: Install packages
+  apt:
+    name: ['haproxy']
+    state: present
+    update_cache: yes
+
+- name: Deploy default haproxy config
+  template:
+    src: "{{item.src}}"
+    dest: "{{item.dest}}"
+    mode: "{{item.mode}}"
+    owner: root
+    group: root
+    decrypt: "{{item.decrypt}}"
+  with_items:
+    - { src: "haproxy.j2", dest: "/etc/haproxy/haproxy.cfg", mode: "0644", decrypt: "no" }
+
+- name: Check haproxy Configuration
+  shell: haproxy -c -f /etc/haproxy/haproxy.cfg
+  changed_when: false
+  register: haproxyCheck
+
+- debug:
+    var: haproxyCheck.stdout_lines
+
+- name: Enable and reload haproxy service
+  service:
+    name: haproxy
+    enabled: yes
+    state: reloaded
+  changed_when: false
+
+- name: Restart haproxy service
+  service:
+    name: haproxy
+    enabled: yes
+    state: restarted
+  changed_when: false
+  when: haproxy_restart is defined and haproxy_restart=="yes"
+
+- name: Haproxy service massage
+  debug:
+    msg: "Use --extra-vars='haproxy_restart=yes' for restarting haproxy!"
+
+- name: Check haproxy status
+  shell: service haproxy status
+  register: sOut
+
+- debug:
+    var: sOut.stdout_lines
