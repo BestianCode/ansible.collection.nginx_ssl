@@ -1,6 +1,6 @@
 - name: Install packages
   ansible.builtin.package:
-    name: nginx-full
+    name: "{{ ['nginx-full'] + (nginx_extra_packages | default([])) }}"
     state: present
     autoremove: yes
 

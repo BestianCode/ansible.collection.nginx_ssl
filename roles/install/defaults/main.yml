@@ -7,3 +7,10 @@ nginx_group: www-data
 catch_default_80: false
 # It's necessary disable catching of default port 443 by Nginx to make Signal proxy working on default HTTPS port
 catch_default_443: false
+
+# Optional additional OS packages to install together with nginx-full.
+nginx_extra_packages: []
+
+# Example:
+# nginx_extra_packages:
+#   - libnginx-mod-http-headers-more-filter
