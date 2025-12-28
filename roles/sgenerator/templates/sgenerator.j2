@@ -1,0 +1,97 @@
+{% if nginx_frontend_configurations is defined %}
+{% for x in nginx_frontend_configurations %}
+
+    server {
+        listen                      443 ssl http2;
+
+        server_name                 {{x.dns}};
+
+        ssl_certificate             /etc/letsencrypt/live/{{x.domain}}/fullchain.pem;
+        ssl_certificate_key         /etc/letsencrypt/live/{{x.domain}}/privkey.pem;
+{% if x.send_timeout is defined %}
+
+        keepalive_timeout           {{x.send_timeout}}s;
+{% endif %}
+{% if x.client_max_body_size is defined %}
+        client_max_body_size        {{x.client_max_body_size}};
+
+{% endif %}
+        location / {
+{% if x.cors is defined %}
+
+            more_clear_headers      'Access-Control-Allow-Origin';
+            more_clear_headers      'Access-Control-Allow-Methods';
+            more_clear_headers      'Access-Control-Allow-Headers';
+            more_clear_headers      'access-control-expose-headers';
+            more_clear_headers      'x-powered-by';
+
+            set $cors_origin "";
+
+            if ($http_origin ~* "{{ x.cors }}") {
+                set $cors_origin $http_origin;
+            }
+
+            if ($cors_origin = "") {
+                set $cors_origin $http_referer;
+            }
+
+            if ($cors_origin !~* "{{ x.cors }}") {
+{% if x.cors_origin_default is defined %}
+                set $cors_origin {{ x.cors_origin_default }};
+{% else %}
+                set $cors_origin "";
+{% endif %}
+            }
+
+            add_header              'Access-Control-Allow-Origin'  "$cors_origin"  always;
+{% if x.cors_methods is defined %}
+            add_header              'Access-Control-Allow-Methods' '{{ x.cors_methods }}';
+{% endif %}
+{% if x.cors_headers is defined %}
+            add_header              'Access-Control-Allow-Headers' "{{ x.cors_headers }}";
+{% endif %}
+
+{% endif %}
+{% if x.restrict is defined %}
+{% for u in x.restrict %}
+            if ($request_uri ~* "{{ u.uri }}") {
+                return 403;
+            }
+{% endfor %}
+{% endif %}
+{% if x.mode is defined and x.mode.startswith('http') %}
+            proxy_set_header        Host                $host;
+            proxy_set_header        X-Forwarded-Proto   $scheme;
+            proxy_set_header        X-Forwarded-Port    $server_port;
+            proxy_set_header        X-Forwarded-For     $proxy_add_x_forwarded_for;
+            proxy_set_header        X-Forwarded-Ssl     on;
+            proxy_set_header        X-Real-IP           $remote_addr;
+            proxy_http_version      1.1;
+
+            proxy_set_header        Upgrade             $http_upgrade;
+            proxy_set_header        Connection          $connection_upgrade;
+
+{% if x.client_max_body_size is defined %}
+            proxy_read_timeout      {{x.proxy_read_timeout}};
+{% endif %}
+{% if x.proxy_send_timeout is defined %}
+            proxy_send_timeout      {{x.proxy_send_timeout}};
+{% endif %}
+{% if x.proxy_connect_timeout is defined %}
+            proxy_connect_timeout   {{x.proxy_connect_timeout}};
+{% endif %}
+{% if x.send_timeout is defined %}
+            send_timeout            {{x.send_timeout}};
+{% endif %}
+
+            proxy_buffering         off;
+
+            proxy_pass              {{x.mode}}://{{x.backend}};
+{% endif %}
+{% if x.mode is defined and x.mode == 'grpc' %}
+            grpc_pass               {{x.mode}}://{{x.backend}};
+{% endif %}
+        }
+    }
+{% endfor %}
+{% endif %}

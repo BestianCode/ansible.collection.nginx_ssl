@@ -1,0 +1,40 @@
+---
+
+
+# List of frontend vhosts to generate into /etc/nginx/sites-available/sgenerator
+#
+# Each item supports the keys referenced in templates/sgenerator.j2.
+# Keep this list empty to make the role a no-op.
+nginx_frontend_configurations: []
+
+# Example:
+# nginx_frontend_configurations:
+#   - dns: "app.example.com"            # server_name (required)
+#     domain: "example.com"             # used for LE cert path (required)
+#
+#     # Backend routing mode:
+#     # - "http" / "https" for proxy_pass
+#     # - "grpc" for grpc_pass
+#     mode: "http"                      # required
+#     backend: "127.0.0.1:8080"          # required
+#
+#     # Optional timeouts / limits
+#     send_timeout: 60                   # seconds; also sets keepalive_timeout
+#     client_max_body_size: "50m"        # nginx size value
+#     proxy_read_timeout: 60             # seconds (see note below)
+#     proxy_send_timeout: 60             # seconds
+#     proxy_connect_timeout: 5           # seconds
+#
+#     # Optional CORS
+#     cors: "^https?://(.*\\.)?example\\.com$"  # regex used in nginx if($http_origin ~*)
+#     cors_origin_default: "https://example.com" # used when origin doesn't match
+#     cors_methods: "GET, POST, OPTIONS"
+#     cors_headers: "Authorization, Content-Type"
+#
+#     # Optional request restrictions (deny by URI regex)
+#     restrict:
+#       - uri: "^/admin"
+#       - uri: "^/internal"
+
+# Note: templates/sgenerator.j2 currently renders proxy_read_timeout only when
+# client_max_body_size is defined (it likely meant to check proxy_read_timeout).

@@ -1,0 +1,10 @@
+- name: Deploy generated sites config
+  template:
+    src: "{{item.src}}"
+    dest: "{{item.dest}}"
+    mode: "{{item.mode}}"
+    owner: root
+    group: root
+    decrypt: "{{item.decrypt}}"
+  with_items:
+    - { src: "sgenerator.j2",    dest: "/etc/nginx/sites-available/sgenerator", mode: "0644", decrypt: "no" }
