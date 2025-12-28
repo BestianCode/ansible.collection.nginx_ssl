@@ -7,6 +7,10 @@
 # Keep this list empty to make the role a no-op.
 nginx_frontend_configurations: []
 
+# Optional: raw Nginx stream{} fragments to be rendered into /etc/nginx/conf.d/900-sgenerator.stream.
+# Useful for L4 proxying features like PROXY protocol toward upstreams.
+nginx_stream_configurations_raw: []
+
 # LetsEncrypt certificate location and filenames used by templates/sgenerator.j2
 nginx_letsencrypt_live_dir: /etc/letsencrypt/live
 nginx_ssl_certificate_filename: fullchain.pem
