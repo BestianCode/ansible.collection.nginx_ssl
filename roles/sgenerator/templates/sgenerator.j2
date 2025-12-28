@@ -35,8 +35,8 @@
 
         server_name                 {{x.dns}};
 
-        ssl_certificate             /etc/letsencrypt/live/{{x.domain}}/fullchain.pem;
-        ssl_certificate_key         /etc/letsencrypt/live/{{x.domain}}/privkey.pem;
+        ssl_certificate             {{ nginx_letsencrypt_live_dir }}/{{ x.domain }}/{{ nginx_ssl_certificate_filename }};
+        ssl_certificate_key         {{ nginx_letsencrypt_live_dir }}/{{ x.domain }}/{{ nginx_ssl_certificate_key_filename }};
 {% if x.send_timeout is defined %}
 
         keepalive_timeout           {{x.send_timeout}}s;

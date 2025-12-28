@@ -7,6 +7,11 @@
 # Keep this list empty to make the role a no-op.
 nginx_frontend_configurations: []
 
+# LetsEncrypt certificate location and filenames used by templates/sgenerator.j2
+nginx_letsencrypt_live_dir: /etc/letsencrypt/live
+nginx_ssl_certificate_filename: fullchain.pem
+nginx_ssl_certificate_key_filename: privkey.pem
+
 # Example:
 # nginx_frontend_configurations:
 #   - dns: "app.example.com"            # server_name (required)
