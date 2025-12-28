@@ -9,9 +9,9 @@
   with_items:
     - { src: "sgenerator.j2",    dest: "/etc/nginx/sites-available/900-sgenerator", mode: "0644", decrypt: "no" }
 
-    - name: Ensure symlink generated sites config exists
-      ansible.builtin.file:
-        src: /etc/nginx/sites-available/900-sgenerator
-        dest: /etc/nginx/sites-enabled/900-sgenerator
-        state: link
-        force: true
+- name: Ensure symlink generated sites config exists
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/900-sgenerator
+    dest: /etc/nginx/sites-enabled/900-sgenerator
+    state: link
+    force: true
