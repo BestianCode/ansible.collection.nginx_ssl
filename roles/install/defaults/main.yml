@@ -1,6 +1,32 @@
 ---
 
+# nginx worker_processes directive.
+# Use a fixed number if you want predictable process count.
+# If undefined, the template defaults to 'auto'.
 # nginx_worker_processes: 4
+
+# nginx events.worker_connections.
+# Default in upstream nginx.conf is often 1024; raise this for high concurrency.
+nginx_worker_connections: 8192
+
+# nginx events.multi_accept (on/off).
+# When set, a worker accepts as many connections as possible at a time.
+# Leave undefined to keep nginx default.
+# nginx_multi_accept: on
+
+# nginx http.keepalive_timeout.
+# Very large values can keep many idle sockets around and exhaust worker_connections.
+nginx_keepalive_timeout: 65s
+
+# nginx http.keepalive_requests.
+# Limit requests per keepalive connection (helps with long-lived clients).
+# Leave undefined to use nginx default.
+# nginx_keepalive_requests: 10000
+
+# nginx worker_rlimit_nofile.
+# Should match your OS/service limits if you increase worker_connections.
+# Leave undefined to keep OS default.
+# nginx_worker_rlimit_nofile: 200000
 
 nginx_user: www-data
 nginx_group: www-data

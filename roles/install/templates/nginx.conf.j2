@@ -1,12 +1,17 @@
 user                    {{ nginx_user }};
 worker_processes        {{ nginx_worker_processes | default('auto') }};
+{% if nginx_worker_rlimit_nofile is defined %}
+worker_rlimit_nofile    {{ nginx_worker_rlimit_nofile }};
+{% endif %}
 pid                     /run/nginx.pid;
 error_log               /var/log/nginx/error.log;
 include                 /etc/nginx/modules-enabled/*.conf;
 
 events {
-    worker_connections  1024;
-    # multi_accept on;
+    worker_connections  {{ nginx_worker_connections | default(8192) }};
+{% if nginx_multi_accept is defined %}
+    multi_accept        {{ nginx_multi_accept }};
+{% endif %}
 }
 
 http {
@@ -17,7 +22,10 @@ http {
     sendfile            on;
     tcp_nopush          on;
     tcp_nodelay         on;
-    keepalive_timeout   3600s;
+    keepalive_timeout   {{ nginx_keepalive_timeout | default('65s') }};
+{% if nginx_keepalive_requests is defined %}
+    keepalive_requests  {{ nginx_keepalive_requests }};
+{% endif %}
     types_hash_max_size 2048;
     # server_tokens off;
 

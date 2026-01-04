@@ -1,5 +1,10 @@
 ---
 
+# HAProxy threading.
+# If unset, the template defaults to `ansible_processor_vcpus` (or 4 if unavailable).
+# Set explicitly per host if you want a stable value.
+# haproxy_nbthread: 8
+
 # When set to "yes", tasks/main.yml will restart HAProxy (otherwise it reloads).
 #haproxy_restart: "no"
 

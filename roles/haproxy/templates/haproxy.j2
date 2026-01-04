@@ -9,6 +9,10 @@ global
     node            {{ ansible_host }}
     daemon
 
+    # Use multiple threads to handle high concurrency.
+    # Override per-host with `haproxy_nbthread` if you need a fixed value.
+    nbthread        {{ haproxy_nbthread | default(ansible_processor_vcpus | default(4)) }}
+
     maxconn         128000
     spread-checks   5
 
