@@ -8,7 +8,7 @@
     decrypt: "{{item.decrypt}}"
   with_items:
     - { src: "sgenerator.j2",    dest: "/etc/nginx/sites-available/900-sgenerator", mode: "0644", decrypt: "no" }
-  when: nginx_frontend_configurations is defined and nginx_frontend_configurations | length > 0
+  when: (nginx_frontend_configurations is defined and nginx_frontend_configurations | length > 0) or (nginx_frontend_configurations_raw is defined and nginx_frontend_configurations_raw | length > 0)
 
 - name: Ensure symlink generated sites config exists
   ansible.builtin.file:
@@ -16,4 +16,4 @@
     dest: /etc/nginx/sites-enabled/900-sgenerator
     state: link
     force: true
-  when: nginx_frontend_configurations is defined and nginx_frontend_configurations | length > 0
+  when: (nginx_frontend_configurations is defined and nginx_frontend_configurations | length > 0) or (nginx_frontend_configurations_raw is defined and nginx_frontend_configurations_raw | length > 0)
