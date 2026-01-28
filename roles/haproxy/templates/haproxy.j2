@@ -13,7 +13,7 @@ global
     # Override per-host with `haproxy_nbthread` if you need a fixed value.
     nbthread        {{ haproxy_nbthread | default(ansible_processor_vcpus | default(4)) }}
 
-    maxconn         128000
+    maxconn         {{ haproxy_maxconn }}
     spread-checks   5
 
     ssl-default-bind-ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384
@@ -26,11 +26,10 @@ global
     tune.ssl.lifetime 600
 
 defaults
-    timeout         queue   10s
-    timeout         client  300s
-    timeout         server  300s
-    timeout         connect 10s
-    timeout         queue   10s
+    timeout         queue   {{ haproxy_timeout_queue }}
+    timeout         client  {{ haproxy_timeout_client }}
+    timeout         server  {{ haproxy_timeout_server }}
+    timeout         connect {{ haproxy_timeout_connect }}
 
     retries         3
     option          persist

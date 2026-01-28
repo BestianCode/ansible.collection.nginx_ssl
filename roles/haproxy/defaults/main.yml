@@ -2,6 +2,16 @@
 
 haproxy_worker_rlimit_nofile: 1024000
 
+# Global section settings
+haproxy_maxconn: 128000
+
+# HAProxy timeouts (defaults section)
+# Override per-host/group as needed.
+haproxy_timeout_queue: "10s"
+haproxy_timeout_client: "300s"
+haproxy_timeout_server: "300s"
+haproxy_timeout_connect: "10s"
+
 # HAProxy threading.
 # If unset, the template defaults to `ansible_processor_vcpus` (or 4 if unavailable).
 # Set explicitly per host if you want a stable value.
