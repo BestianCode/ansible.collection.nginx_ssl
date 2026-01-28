@@ -27,6 +27,7 @@
     server {{ _addr }};
 {% endif %}
 {% endfor %}
+    keepalive {{ x.backend_keepalive | default(1024) }};
     }
 {% endif %}
 

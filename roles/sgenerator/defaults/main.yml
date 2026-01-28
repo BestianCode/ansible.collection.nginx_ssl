@@ -18,25 +18,41 @@ nginx_ssl_certificate_key_filename: privkey.pem
 
 # Example:
 # nginx_frontend_configurations:
-#   - dns: "app.example.com"            # server_name (required)
-#     domain: "example.com"             # used for LE cert path (required)
+#   - dns: "app.example.com"                 # server_name (required)
+#     domain: "example.com"                  # used for LE cert path (required)
 #
 #     # Backend routing mode:
 #     # - "http" / "https" for proxy_pass
 #     # - "grpc" for grpc_pass
-#     mode: "http"                      # required
-#     backend: "127.0.0.1:8080"          # required
+#     mode: "http"                           # required
+#
+#     # Backend target:
+#     # - string (single upstream)
+#     # - list (generates an upstream{} block)
+#     # backend: "127.0.0.1:8080"
+#     backend:
+#       - address: "127.0.0.1"               # address OR host/port
+#         params: "max_fails=3 fail_timeout=10s"  # optional extra server params
+#       - address: "127.0.0.2:8080"          # can include port in address
+#       # - host: "127.0.0.3"                # alternative form
+#       #   port: 8080
+#
+#     # Optional port helper when backend items omit port
+#     backend_port: 8080
+#
+#     # Optional upstream keepalive (only affects list backend / generated upstream{})
+#     backend_keepalive: 1024
 #
 #     # Optional timeouts / limits
-#     send_timeout: 60                   # seconds; also sets keepalive_timeout
-#     client_max_body_size: "50m"        # nginx size value
-#     proxy_read_timeout: 60             # seconds (see note below)
-#     proxy_send_timeout: 60             # seconds
-#     proxy_connect_timeout: 5           # seconds
+#     send_timeout: 60                        # seconds; also sets keepalive_timeout
+#     client_max_body_size: "50m"             # nginx size value
+#     proxy_read_timeout: 60                  # seconds (see note below)
+#     proxy_send_timeout: 60                  # seconds
+#     proxy_connect_timeout: 5                # seconds
 #
 #     # Optional CORS
-#     cors: "^https?://(.*\\.)?example\\.com$"  # regex used in nginx if($http_origin ~*)
-#     cors_origin_default: "https://example.com" # used when origin doesn't match
+#     cors: "^https?://(.*\\.)?example\\.com$"      # regex used in nginx if($http_origin ~*)
+#     cors_origin_default: "https://example.com"    # used when origin doesn't match
 #     cors_methods: "GET, POST, OPTIONS"
 #     cors_headers: "Authorization, Content-Type"
 #
