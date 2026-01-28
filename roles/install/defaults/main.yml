@@ -9,6 +9,8 @@
 # Default in upstream nginx.conf is often 1024; raise this for high concurrency.
 nginx_worker_connections: 8192
 
+nginx_worker_rlimit_nofile: 1024000
+
 # nginx events.multi_accept (on/off).
 # When set, a worker accepts as many connections as possible at a time.
 # Leave undefined to keep nginx default.

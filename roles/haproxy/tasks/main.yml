@@ -15,6 +15,32 @@
   with_items:
     - { src: "haproxy.j2", dest: "/etc/haproxy/haproxy.cfg", mode: "0644", decrypt: "no" }
 
+- name: Ensure systemd override dir for haproxy exists
+  ansible.builtin.file:
+    path: /etc/systemd/system/haproxy.service.d
+    state: directory
+    mode: "0755"
+
+- name: Set LimitNOFILE for haproxy
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/haproxy.service.d/override.conf
+    mode: "0644"
+    content: |
+      [Service]
+      LimitNOFILE={{ haproxy_worker_rlimit_nofile | default(1024000) }}
+
+- name: Set ulimits for haproxy
+  ansible.builtin.copy:
+    dest: /etc/security/limits.d/900-haproxy.conf
+    mode: "0644"
+    content: |
+      haproxy soft nofile {{ haproxy_worker_rlimit_nofile | default(1024000) }}
+      haproxy hard nofile {{ haproxy_worker_rlimit_nofile | default(1024000) }}
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
 - name: Check haproxy Configuration
   shell: haproxy -c -f /etc/haproxy/haproxy.cfg
   changed_when: false

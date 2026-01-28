@@ -39,3 +39,29 @@
   with_items:
     - { src: "nginx.conf.j2",       dest: "/etc/nginx/nginx.conf",              mode: "0644", decrypt: "no" }
     - { src: "sites/default.j2",    dest: "/etc/nginx/sites-available/default", mode: "0644", decrypt: "no" }
+
+- name: Ensure systemd override dir for nginx exists
+  ansible.builtin.file:
+    path: /etc/systemd/system/nginx.service.d
+    state: directory
+    mode: "0755"
+
+- name: Set LimitNOFILE for nginx
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/nginx.service.d/override.conf
+    mode: "0644"
+    content: |
+      [Service]
+      LimitNOFILE={{ nginx_worker_rlimit_nofile | default(1024000) }}
+
+- name: Set ulimits for nginx
+  ansible.builtin.copy:
+    dest: /etc/security/limits.d/900-nginx.conf
+    mode: "0644"
+    content: |
+      www-data soft nofile {{ nginx_worker_rlimit_nofile | default(1024000) }}
+      www-data hard nofile {{ nginx_worker_rlimit_nofile | default(1024000) }}
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
