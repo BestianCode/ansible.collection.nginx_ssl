@@ -20,6 +20,37 @@ haproxy_timeout_connect: "10s"
 # When set to "yes", tasks/main.yml will restart HAProxy (otherwise it reloads).
 #haproxy_restart: "no"
 
+# Commands to run BEFORE HAProxy reload/restart.
+#
+# Two supported formats:
+# 1) Simple list of shell strings (executed in order):
+# haproxy_pre_reload_shell_commands:
+#   - "umask 077 && cat /etc/letsencrypt/live/example.com/fullchain.pem /etc/letsencrypt/live/example.com/privkey.pem > /etc/letsencrypt/live/example.com/all.pem"
+#
+# 2) Structured list (supports label/chdir/creates/etc):
+# haproxy_pre_reload_actions:
+#   - name: "Unified SSL certificate for HAProxy (example.com)"
+#     command: "umask 077 && cat /etc/letsencrypt/live/example.com/fullchain.pem /etc/letsencrypt/live/example.com/privkey.pem > /etc/letsencrypt/live/example.com/all.pem"
+#     executable: /bin/bash
+#     changed_when: false
+haproxy_pre_reload_shell_executable: /bin/bash
+haproxy_pre_reload_shell_commands: []
+haproxy_pre_reload_actions: []
+
+# Optional cron job to periodically run the same pre-reload actions and then reload HAProxy.
+#
+# The role will deploy a root-owned script and install a cron entry that runs it.
+# The script includes BOTH lists: haproxy_pre_reload_shell_commands + haproxy_pre_reload_actions[].command.
+haproxy_cron_enabled: false
+haproxy_cron_name: "HAProxy pre-reload actions + reload"
+haproxy_cron_user: root
+haproxy_cron_hour: "1"
+haproxy_cron_minute: "10"
+haproxy_cron_script_path: /usr/local/sbin/haproxy-pre-reload-actions.sh
+
+# Command executed at the end of the cron script.
+haproxy_cron_reload_command: "systemctl reload haproxy"
+
 # Extra HAProxy config stanzas appended verbatim after the global/defaults blocks.
 #
 # This is intentionally a list of raw strings so you can paste normal haproxy.cfg

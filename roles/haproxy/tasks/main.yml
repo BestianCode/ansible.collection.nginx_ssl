@@ -41,6 +41,59 @@
   ansible.builtin.systemd:
     daemon_reload: true
 
+- name: Run HAProxy pre-reload actions (simple shell list)
+  ansible.builtin.shell: "{{ item }}"
+  args:
+    executable: "{{ haproxy_pre_reload_shell_executable }}"
+  loop: "{{ haproxy_pre_reload_shell_commands | default([]) }}"
+  loop_control:
+    label: "{{ item }}"
+  when:
+    - (haproxy_pre_reload_shell_commands | default([])) | length > 0
+
+- name: Run HAProxy pre-reload actions (structured list)
+  ansible.builtin.shell: "{{ item.command }}"
+  args:
+    executable: "{{ item.executable | default(haproxy_pre_reload_shell_executable) }}"
+    chdir: "{{ item.chdir | default(omit) }}"
+    creates: "{{ item.creates | default(omit) }}"
+    removes: "{{ item.removes | default(omit) }}"
+  loop: "{{ haproxy_pre_reload_actions | default([]) }}"
+  loop_control:
+    label: "{{ item.name | default(item.command) }}"
+  changed_when: "{{ item.changed_when | default(false) }}"
+  when:
+    - (haproxy_pre_reload_actions | default([])) | length > 0
+
+- name: Ensure cron package is installed (Debian family)
+  ansible.builtin.apt:
+    name: cron
+    state: present
+    update_cache: false
+  when:
+    - haproxy_cron_enabled | default(false)
+    - ansible_os_family | lower == 'debian'
+
+- name: Deploy HAProxy pre-reload cron script
+  ansible.builtin.template:
+    src: haproxy-pre-reload-actions.sh.j2
+    dest: "{{ haproxy_cron_script_path }}"
+    owner: root
+    group: root
+    mode: "0750"
+  when:
+    - haproxy_cron_enabled | default(false)
+
+- name: Install HAProxy pre-reload cron job
+  ansible.builtin.cron:
+    name: "{{ haproxy_cron_name }}"
+    user: "{{ haproxy_cron_user }}"
+    minute: "{{ haproxy_cron_minute }}"
+    hour: "{{ haproxy_cron_hour }}"
+    job: "{{ haproxy_cron_script_path }}"
+  when:
+    - haproxy_cron_enabled | default(false)
+
 - name: Check haproxy Configuration
   shell: haproxy -c -f /etc/haproxy/haproxy.cfg
   changed_when: false
@@ -55,6 +108,7 @@
     enabled: yes
     state: reloaded
   changed_when: false
+  when: not (haproxy_restart is defined and haproxy_restart == "yes")
 
 - name: Restart haproxy service
   service:
