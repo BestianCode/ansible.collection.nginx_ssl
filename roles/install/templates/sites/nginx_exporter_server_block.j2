@@ -14,8 +14,11 @@
 
         location {{ nginx_exporter_server_block_location | default('/metrics') }} {
     {% for network in nginx_exporter_server_block_allow_networks | default(['127.0.0.1/32']) %}
-            allow                   {{ (network | string).split(';')[0] | trim }};
-{% endfor %}
+    {% set clean_network = (network | string | regex_replace('\s*#.*$', '') | regex_replace('\s*;.*$', '') | trim) %}
+    {% if clean_network %}
+            allow                   {{ clean_network }};
+    {% endif %}
+    {% endfor %}
             deny                    all;
 
             proxy_set_header        Host                $host;
