@@ -77,3 +77,9 @@ listen admin_stats
     stats       show-legends
     stats       show-node
     stats       refresh 15s
+
+listen prometheus_metrics
+    bind        127.0.0.1:8405
+    mode        http
+    http-request use-service prometheus-exporter if { path /metrics }
+    no          log

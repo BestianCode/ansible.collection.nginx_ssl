@@ -96,7 +96,7 @@ nginx_exporter_server_block_allow_networks:
   - "127.0.0.1/32" # localhost only by default
 
 nginx_exporter_haproxy_server_block: false
-nginx_exporter_haproxy_server_block_scrape_url: http://127.0.0.1:8404/haproxy_status
+nginx_exporter_haproxy_server_block_scrape_url: http://127.0.0.1:8405/metrics
 nginx_exporter_haproxy_server_block_port: 28889
 nginx_exporter_haproxy_server_block_listen_host: 127.0.0.1
 nginx_exporter_haproxy_server_block_listen_host_ipv6: ::1
