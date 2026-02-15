@@ -102,7 +102,7 @@
 
 - name: Deploy HaProxy exporter server block
   ansible.builtin.template:
-    src: haproxy_exporter_server_block.j2
+    src: sites/haproxy_exporter_server_block.j2
     dest: /etc/nginx/sites-available/haproxy_exporter
     mode: '0644'
     owner: root

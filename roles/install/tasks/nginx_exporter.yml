@@ -73,7 +73,7 @@
 
 - name: Deploy Nginx exporter server block
   ansible.builtin.template:
-    src: nginx_exporter_server_block.j2
+    src: sites/nginx_exporter_server_block.j2
     dest: /etc/nginx/sites-available/nginx_exporter
     mode: '0644'
     owner: root
