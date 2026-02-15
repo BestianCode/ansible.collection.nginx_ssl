@@ -89,6 +89,8 @@ nginx_exporter_scrape_url: http://127.0.0.1:81/nginx_status
 nginx_exporter_server_block: false
 nginx_exporter_server_block_scrape_url: http://127.0.0.1:9113/metrics
 nginx_exporter_server_block_port: 28888
+nginx_exporter_server_block_listen_host: 127.0.0.1
+nginx_exporter_server_block_listen_host_ipv6: ::1
 nginx_exporter_server_block_location: /metrics
 nginx_exporter_server_block_allow_networks:
   - "127.0.0.1/32" # localhost only by default
@@ -96,6 +98,8 @@ nginx_exporter_server_block_allow_networks:
 nginx_exporter_haproxy_server_block: false
 nginx_exporter_haproxy_server_block_scrape_url: http://127.0.0.1:8404/haproxy_status
 nginx_exporter_haproxy_server_block_port: 28889
+nginx_exporter_haproxy_server_block_listen_host: 127.0.0.1
+nginx_exporter_haproxy_server_block_listen_host_ipv6: ::1
 nginx_exporter_haproxy_server_block_location: /metrics
 nginx_exporter_haproxy_server_block_allow_networks:
   - "127.0.0.1/32" # localhost only by default

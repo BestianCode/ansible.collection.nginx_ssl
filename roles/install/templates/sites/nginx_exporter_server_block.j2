@@ -2,9 +2,9 @@
 
 {% if nginx_exporter_server_block | default(true) %}
     server {
-    listen              127.0.0.1:{{ nginx_exporter_server_block_port | default(80) }} default_server;
+    listen              {{ nginx_exporter_server_block_listen_host | default('127.0.0.1') }}:{{ nginx_exporter_server_block_port | default(80) }} default_server;
 {% if nginx_ipv6 | default(false) %}
-    listen              [::1]:{{ nginx_exporter_server_block_port | default(80) }} default_server;
+    listen              [{{ nginx_exporter_server_block_listen_host_ipv6 | default('::1') }}]:{{ nginx_exporter_server_block_port | default(80) }} default_server;
 {% endif %}
 
         server_name         _;
