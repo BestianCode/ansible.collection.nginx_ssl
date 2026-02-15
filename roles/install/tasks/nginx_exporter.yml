@@ -79,3 +79,17 @@
     owner: root
     group: root
   when: nginx_exporter_server_block | default(false)
+
+- name: Ensure Nginx exporter server block is enabled
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/nginx_exporter
+    dest: /etc/nginx/sites-enabled/nginx_exporter
+    state: link
+    force: true
+  when: nginx_exporter_server_block | default(false)
+
+- name: Ensure Nginx exporter server block is disabled when not needed
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/nginx_exporter
+    state: absent
+  when: not nginx_exporter_server_block | default(false)
