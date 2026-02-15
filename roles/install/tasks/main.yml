@@ -95,3 +95,16 @@
 - name: Reload systemd
   ansible.builtin.systemd:
     daemon_reload: true
+
+- name: Install Nginx exporter
+  import_tasks: nginx_exporter.yml
+  when: nginx_exporter_enable | default(false)
+
+- name: Deploy HaProxy exporter server block
+  ansible.builtin.template:
+    src: haproxy_exporter_server_block.j2
+    dest: /etc/nginx/sites-available/haproxy_exporter
+    mode: '0644'
+    owner: root
+    group: root
+  when: nginx_exporter_haproxy_server_block | default(false)

@@ -80,3 +80,22 @@ nginx_logrotate_state_file: /var/lib/logrotate/status-nginx
 # Example:
 # nginx_extra_packages:
 #   - libnginx-mod-http-headers-more-filter
+
+nginx_exporter_enable: false
+nginx_exporter_version: 1.5.1
+nginx_exporter_host: 127.0.0.1
+nginx_exporter_port: 9113
+nginx_exporter_scrape_url: http://127.0.0.1:81/nginx_status
+nginx_exporter_server_block: false
+nginx_exporter_server_block_scrape_url: http://127.0.0.1:9113/metrics
+nginx_exporter_server_block_port: 28888
+nginx_exporter_server_block_location: /metrics
+nginx_exporter_server_block_allow_networks:
+  - "127.0.0.1/32; # localhost only by default"
+
+nginx_exporter_haproxy_server_block: false
+nginx_exporter_haproxy_server_block_scrape_url: http://127.0.0.1:8404/haproxy_status
+nginx_exporter_haproxy_server_block_port: 28889
+nginx_exporter_haproxy_server_block_location: /metrics
+nginx_exporter_haproxy_server_block_allow_networks:
+  - "127.0.0.1/32; # localhost only by default"

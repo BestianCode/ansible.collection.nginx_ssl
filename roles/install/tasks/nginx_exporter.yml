@@ -1,0 +1,81 @@
+---
+
+- name: Download Nginx exporter archive version {{ nginx_exporter_version }}
+  ansible.builtin.get_url:
+    url: >
+      https://github.com/nginxinc/nginx-prometheus-exporter/releases/download/v{{ nginx_exporter_version }}/nginx-prometheus-exporter_{{ nginx_exporter_version }}_linux_amd64.tar.gz
+    dest: /tmp/nginx-prometheus-exporter_{{ nginx_exporter_version }}_linux_amd64.tar.gz
+    mode: '0644'
+  check_mode: false
+
+- name: Uncompress Nginx exporter archive
+  ansible.builtin.unarchive:
+    remote_src: true
+    src: /tmp/nginx-prometheus-exporter_{{ nginx_exporter_version }}_linux_amd64.tar.gz
+    include: "nginx-prometheus-exporter"
+    dest: /tmp
+  check_mode: false
+
+- name: Copy Nginx exporter binary to /usr/local/sbin/
+  ansible.builtin.copy:
+    remote_src: true
+    src: /tmp/nginx-prometheus-exporter
+    dest: /usr/local/sbin/nginx-prometheus-exporter
+    mode: '0755'
+    owner: root
+    group: root
+  register: nginx_exporter_binary
+
+- name: Create systemd service file for nginx-prometheus-exporter
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/nginx-prometheus-exporter.service
+    content: |
+      [Unit]
+      Description=Nginx Prometheus Exporter
+      After=network.target
+
+      [Service]
+      User=nobody
+      ExecStart=/usr/local/sbin/nginx-prometheus-exporter -nginx.scrape-uri {{ nginx_exporter_scrape_url }} -web.listen-address={{ nginx_exporter_host }}:{{ nginx_exporter_port }}
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+    mode: '0644'
+    owner: root
+    group: root
+  register: nginx_exporter_unit
+
+- name: Reload systemd to apply new service definition
+  ansible.builtin.systemd:
+    daemon_reload: true
+  when: nginx_exporter_unit.changed
+
+- name: Enable and start nginx-prometheus-exporter service
+  ansible.builtin.systemd:
+    name: nginx-prometheus-exporter
+    enabled: true
+    state: started
+
+- name: Restart nginx-prometheus-exporter when binary or unit changed
+  ansible.builtin.systemd:
+    name: nginx-prometheus-exporter
+    state: restarted
+  when: nginx_exporter_binary.changed or nginx_exporter_unit.changed
+
+- name: Clean up Nginx exporter archive and extracted binary
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/nginx-prometheus-exporter_{{ nginx_exporter_version }}_linux_amd64.tar.gz
+    - /tmp/nginx-prometheus-exporter
+
+- name: Deploy Nginx exporter server block
+  ansible.builtin.template:
+    src: nginx_exporter_server_block.j2
+    dest: /etc/nginx/sites-available/nginx_exporter
+    mode: '0644'
+    owner: root
+    group: root
+  when: nginx_exporter_server_block | default(false)
