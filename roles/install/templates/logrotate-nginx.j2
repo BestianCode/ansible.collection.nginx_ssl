@@ -1,0 +1,39 @@
+{{ nginx_logrotate_logs | join(' ') }} {
+    {{ nginx_logrotate_frequency }}
+    rotate {{ nginx_logrotate_rotate }}
+{% if nginx_logrotate_missingok | bool %}
+    missingok
+{% endif %}
+{% if nginx_logrotate_notifempty | bool %}
+    notifempty
+{% endif %}
+{% if nginx_logrotate_compress | bool %}
+    compress
+{% endif %}
+{% if nginx_logrotate_delaycompress | bool %}
+    delaycompress
+{% endif %}
+{% if (nginx_logrotate_create | default('') | trim) | length > 0 %}
+    create {{ nginx_logrotate_create }}
+{% endif %}
+{% if nginx_logrotate_sharedscripts | bool %}
+    sharedscripts
+{% endif %}
+{% if (nginx_logrotate_prerotate_script | default('') | trim) | length > 0 %}
+    prerotate
+{% for line in nginx_logrotate_prerotate_script.split('\n') %}
+{% if (line | trim) | length > 0 %}
+        {{ line }}
+{% endif %}
+{% endfor %}
+    endscript
+{% endif %}
+{% if (nginx_logrotate_postrotate_command | default('') | trim) | length > 0 %}
+    postrotate
+        {{ nginx_logrotate_postrotate_command }}
+    endscript
+{% endif %}
+{% for option in nginx_logrotate_extra_options | default([]) %}
+    {{ option }}
+{% endfor %}
+}

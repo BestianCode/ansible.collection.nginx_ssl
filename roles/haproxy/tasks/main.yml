@@ -15,6 +15,16 @@
   with_items:
     - { src: "haproxy.j2", dest: "/etc/haproxy/haproxy.cfg", mode: "0644", decrypt: "no" }
 
+- name: Deploy HAProxy logrotate config
+  ansible.builtin.template:
+    src: logrotate-haproxy.j2
+    dest: "{{ haproxy_logrotate_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when:
+    - haproxy_logrotate_enabled | default(true)
+
 - name: Ensure systemd override dir for haproxy exists
   ansible.builtin.file:
     path: /etc/systemd/system/haproxy.service.d
@@ -71,7 +81,7 @@
     state: present
     update_cache: false
   when:
-    - haproxy_cron_enabled | default(false)
+    - (haproxy_cron_enabled | default(false)) or (haproxy_logrotate_cron_enabled | default(false))
     - ansible_os_family | lower == 'debian'
 
 - name: Deploy HAProxy pre-reload cron script
@@ -93,6 +103,17 @@
     job: "{{ haproxy_cron_script_path }}"
   when:
     - haproxy_cron_enabled | default(false)
+
+- name: Install HAProxy logrotate cron job
+  ansible.builtin.cron:
+    name: "{{ haproxy_logrotate_cron_name }}"
+    user: "{{ haproxy_logrotate_cron_user }}"
+    minute: "{{ haproxy_logrotate_cron_minute }}"
+    hour: "{{ haproxy_logrotate_cron_hour }}"
+    job: "logrotate -s {{ haproxy_logrotate_state_file }} {{ haproxy_logrotate_path }}"
+  when:
+    - haproxy_logrotate_enabled | default(true)
+    - haproxy_logrotate_cron_enabled | default(false)
 
 - name: Check haproxy Configuration
   shell: haproxy -c -f /etc/haproxy/haproxy.cfg

@@ -40,6 +40,36 @@
     - { src: "nginx.conf.j2",       dest: "/etc/nginx/nginx.conf",              mode: "0644", decrypt: "no" }
     - { src: "sites/default.j2",    dest: "/etc/nginx/sites-available/default", mode: "0644", decrypt: "no" }
 
+- name: Deploy Nginx logrotate config
+  ansible.builtin.template:
+    src: logrotate-nginx.j2
+    dest: "{{ nginx_logrotate_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when:
+    - nginx_logrotate_enabled | default(true)
+
+- name: Ensure cron package is installed (Debian family)
+  ansible.builtin.apt:
+    name: cron
+    state: present
+    update_cache: false
+  when:
+    - nginx_logrotate_cron_enabled | default(false)
+    - ansible_os_family | lower == 'debian'
+
+- name: Install Nginx logrotate cron job
+  ansible.builtin.cron:
+    name: "{{ nginx_logrotate_cron_name }}"
+    user: "{{ nginx_logrotate_cron_user }}"
+    minute: "{{ nginx_logrotate_cron_minute }}"
+    hour: "{{ nginx_logrotate_cron_hour }}"
+    job: "logrotate -s {{ nginx_logrotate_state_file }} {{ nginx_logrotate_path }}"
+  when:
+    - nginx_logrotate_enabled | default(true)
+    - nginx_logrotate_cron_enabled | default(false)
+
 - name: Ensure systemd override dir for nginx exists
   ansible.builtin.file:
     path: /etc/systemd/system/nginx.service.d

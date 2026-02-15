@@ -41,6 +41,42 @@ catch_default_443: false
 # Optional additional OS packages to install together with nginx-full.
 nginx_extra_packages: []
 
+# Manage /etc/logrotate.d/nginx from this role.
+nginx_logrotate_enabled: true
+nginx_logrotate_path: /etc/logrotate.d/nginx
+nginx_logrotate_logs:
+  - /var/log/nginx/*.log
+nginx_logrotate_frequency: daily
+nginx_logrotate_rotate: 14
+nginx_logrotate_missingok: true
+nginx_logrotate_notifempty: true
+nginx_logrotate_compress: true
+nginx_logrotate_delaycompress: true
+nginx_logrotate_create: "0640 www-data adm"
+nginx_logrotate_sharedscripts: true
+nginx_logrotate_prerotate_script: |
+  if [ -d /etc/logrotate.d/httpd-prerotate ]; then \
+          run-parts /etc/logrotate.d/httpd-prerotate; \
+  fi \
+nginx_logrotate_postrotate_command: "invoke-rc.d nginx rotate >/dev/null 2>&1"
+
+# Extra raw logrotate directives appended inside the block.
+# Example:
+# nginx_logrotate_extra_options:
+#   - maxsize 500M
+nginx_logrotate_extra_options: []
+
+# Optional dedicated cron schedule for Nginx logrotate config only.
+# Useful for sub-daily rotations like hourly or every 6 hours.
+# When enabled, the role installs a cron entry running:
+#   logrotate -s <state_file> <nginx_logrotate_path>
+nginx_logrotate_cron_enabled: false
+nginx_logrotate_cron_name: "logrotate nginx"
+nginx_logrotate_cron_user: root
+nginx_logrotate_cron_minute: "10"
+nginx_logrotate_cron_hour: "*"
+nginx_logrotate_state_file: /var/lib/logrotate/status-nginx
+
 # Example:
 # nginx_extra_packages:
 #   - libnginx-mod-http-headers-more-filter

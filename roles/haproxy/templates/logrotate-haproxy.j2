@@ -1,0 +1,24 @@
+{{ haproxy_logrotate_logs | join(' ') }} {
+    {{ haproxy_logrotate_frequency }}
+    rotate {{ haproxy_logrotate_rotate }}
+{% if haproxy_logrotate_missingok | bool %}
+    missingok
+{% endif %}
+{% if haproxy_logrotate_notifempty | bool %}
+    notifempty
+{% endif %}
+{% if haproxy_logrotate_compress | bool %}
+    compress
+{% endif %}
+{% if haproxy_logrotate_delaycompress | bool %}
+    delaycompress
+{% endif %}
+{% for option in haproxy_logrotate_extra_options | default([]) %}
+    {{ option }}
+{% endfor %}
+{% if (haproxy_logrotate_postrotate_command | default('') | trim) | length > 0 %}
+    postrotate
+        {{ haproxy_logrotate_postrotate_command }}
+    endscript
+{% endif %}
+}

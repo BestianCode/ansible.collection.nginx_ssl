@@ -59,6 +59,36 @@ haproxy_cron_reload_command: "systemctl reload haproxy"
 # Keep it empty to deploy only the base config + local admin stats listener.
 haproxy_backend_configurations: []
 
+# Manage /etc/logrotate.d/haproxy from this role.
+haproxy_logrotate_enabled: true
+haproxy_logrotate_path: /etc/logrotate.d/haproxy
+haproxy_logrotate_logs:
+  - /var/log/haproxy.log
+haproxy_logrotate_frequency: daily
+haproxy_logrotate_rotate: 7
+haproxy_logrotate_missingok: true
+haproxy_logrotate_notifempty: true
+haproxy_logrotate_compress: true
+haproxy_logrotate_delaycompress: true
+haproxy_logrotate_postrotate_command: "[ ! -x /usr/lib/rsyslog/rsyslog-rotate ] || /usr/lib/rsyslog/rsyslog-rotate"
+
+# Extra raw logrotate directives appended inside the block.
+# Example:
+# haproxy_logrotate_extra_options:
+#   - maxsize 500M
+haproxy_logrotate_extra_options: []
+
+# Optional dedicated cron schedule for HAProxy logrotate config only.
+# Useful for sub-daily rotations like hourly or every 6 hours.
+# When enabled, the role installs a cron entry running:
+#   logrotate -s <state_file> <haproxy_logrotate_path>
+haproxy_logrotate_cron_enabled: false
+haproxy_logrotate_cron_name: "logrotate haproxy"
+haproxy_logrotate_cron_user: root
+haproxy_logrotate_cron_minute: "5"
+haproxy_logrotate_cron_hour: "*"
+haproxy_logrotate_state_file: /var/lib/logrotate/status-haproxy
+
 # Example:
 # haproxy_backend_configurations:
 #   - |
