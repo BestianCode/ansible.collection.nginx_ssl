@@ -35,7 +35,10 @@ defaults
     option          persist
     option          redispatch
     option          splice-auto
+
+{% if abortonclose is defined and abortonclose == true %}
     option          abortonclose
+{% endif %}
 
     option          clitcpka
     option          srvtcpka
