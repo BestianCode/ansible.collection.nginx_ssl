@@ -21,6 +21,12 @@ For sub-daily schedules, enable a dedicated cron entry that runs logrotate for N
 - `nginx_logrotate_cron_hour`
 - `nginx_logrotate_cron_minute`
 
+> **Note:** When the cron job is enabled, the logrotate config is automatically
+> placed at `nginx_logrotate_cron_config_path` (default `/etc/logrotate-nginx.conf`)
+> instead of `/etc/logrotate.d/nginx`.  This prevents the systemd daily
+> `logrotate.timer` from also processing the config, which would conflict with
+> the cron schedule and result in only one rotation per day.
+
 Example: rotate hourly
 
 ```yaml

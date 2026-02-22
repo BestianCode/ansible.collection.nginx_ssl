@@ -77,6 +77,11 @@ nginx_logrotate_cron_minute: "10"
 nginx_logrotate_cron_hour: "*"
 nginx_logrotate_state_file: /var/lib/logrotate/status-nginx
 
+# When the cron job is enabled, the logrotate config is placed here
+# (outside /etc/logrotate.d/) so the systemd daily logrotate.timer
+# does not also process it, which would cause duplicate/conflicting rotations.
+nginx_logrotate_cron_config_path: /etc/logrotate-nginx.conf
+
 # Example:
 # nginx_extra_packages:
 #   - libnginx-mod-http-headers-more-filter

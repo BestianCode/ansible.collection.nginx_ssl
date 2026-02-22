@@ -40,7 +40,7 @@
     - { src: "nginx.conf.j2",       dest: "/etc/nginx/nginx.conf",              mode: "0644", decrypt: "no" }
     - { src: "sites/default.j2",    dest: "/etc/nginx/sites-available/default", mode: "0644", decrypt: "no" }
 
-- name: Deploy Nginx logrotate config
+- name: Deploy Nginx logrotate config (systemd timer managed)
   ansible.builtin.template:
     src: logrotate-nginx.j2
     dest: "{{ nginx_logrotate_path }}"
@@ -49,6 +49,38 @@
     mode: "0644"
   when:
     - nginx_logrotate_enabled | default(true)
+    - not (nginx_logrotate_cron_enabled | default(false))
+
+# When using a dedicated cron job the config must live OUTSIDE
+# /etc/logrotate.d/ so the systemd daily logrotate.timer does not
+# also process it (which would cause a single daily rotation and
+# conflict with the cron schedule).
+- name: Deploy Nginx logrotate config (cron managed)
+  ansible.builtin.template:
+    src: logrotate-nginx.j2
+    dest: "{{ nginx_logrotate_cron_config_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when:
+    - nginx_logrotate_enabled | default(true)
+    - nginx_logrotate_cron_enabled | default(false)
+
+- name: Remove Nginx logrotate config from logrotate.d when cron is enabled
+  ansible.builtin.file:
+    path: "{{ nginx_logrotate_path }}"
+    state: absent
+  when:
+    - nginx_logrotate_enabled | default(true)
+    - nginx_logrotate_cron_enabled | default(false)
+
+- name: Remove standalone Nginx logrotate config when cron is disabled
+  ansible.builtin.file:
+    path: "{{ nginx_logrotate_cron_config_path }}"
+    state: absent
+  when:
+    - nginx_logrotate_enabled | default(true)
+    - not (nginx_logrotate_cron_enabled | default(false))
 
 - name: Ensure cron package is installed (Debian family)
   ansible.builtin.apt:
@@ -65,10 +97,18 @@
     user: "{{ nginx_logrotate_cron_user }}"
     minute: "{{ nginx_logrotate_cron_minute }}"
     hour: "{{ nginx_logrotate_cron_hour }}"
-    job: "logrotate -s {{ nginx_logrotate_state_file }} {{ nginx_logrotate_path }}"
+    job: "logrotate -s {{ nginx_logrotate_state_file }} {{ nginx_logrotate_cron_config_path }}"
   when:
     - nginx_logrotate_enabled | default(true)
     - nginx_logrotate_cron_enabled | default(false)
+
+- name: Remove Nginx logrotate cron job when cron is disabled
+  ansible.builtin.cron:
+    name: "{{ nginx_logrotate_cron_name }}"
+    user: "{{ nginx_logrotate_cron_user }}"
+    state: absent
+  when:
+    - not (nginx_logrotate_cron_enabled | default(false))
 
 - name: Ensure systemd override dir for nginx exists
   ansible.builtin.file:
