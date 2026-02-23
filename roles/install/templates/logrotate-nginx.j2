@@ -1,5 +1,8 @@
 {{ nginx_logrotate_logs | join(' ') }} {
     {{ nginx_logrotate_frequency }}
+{% if (nginx_logrotate_size | default('') | trim) | length > 0 %}
+    size {{ nginx_logrotate_size }}
+{% endif %}
     rotate {{ nginx_logrotate_rotate }}
 {% if nginx_logrotate_missingok | bool %}
     missingok

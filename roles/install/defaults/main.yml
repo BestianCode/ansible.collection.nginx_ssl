@@ -47,6 +47,7 @@ nginx_logrotate_path: /etc/logrotate.d/nginx
 nginx_logrotate_logs:
   - /var/log/nginx/*.log
 nginx_logrotate_frequency: daily
+nginx_logrotate_size: ""
 nginx_logrotate_rotate: 14
 nginx_logrotate_missingok: true
 nginx_logrotate_notifempty: true
@@ -66,21 +67,12 @@ nginx_logrotate_postrotate_command: "invoke-rc.d nginx rotate >/dev/null 2>&1"
 #   - maxsize 500M
 nginx_logrotate_extra_options: []
 
-# Optional dedicated cron schedule for Nginx logrotate config only.
-# Useful for sub-daily rotations like hourly or every 6 hours.
-# When enabled, the role installs a cron entry running:
-#   logrotate -s <state_file> <nginx_logrotate_path>
-nginx_logrotate_cron_enabled: false
-nginx_logrotate_cron_name: "logrotate nginx"
-nginx_logrotate_cron_user: root
-nginx_logrotate_cron_minute: "10"
-nginx_logrotate_cron_hour: "*"
-nginx_logrotate_state_file: /var/lib/logrotate/status-nginx
-
-# When the cron job is enabled, the logrotate config is placed here
-# (outside /etc/logrotate.d/) so the systemd daily logrotate.timer
-# does not also process it, which would cause duplicate/conflicting rotations.
-nginx_logrotate_cron_config_path: /etc/logrotate-nginx.conf
+# Manage system logrotate.timer via systemd override.
+# Default schedule is twice per day: 00:00 and 12:00.
+nginx_logrotate_timer_manage: false
+nginx_logrotate_timer_on_calendar: "*-*-* 00:00:00"
+nginx_logrotate_timer_randomized_delay_sec: "0"
+nginx_logrotate_timer_accuracy_sec: "1min"
 
 # Example:
 # nginx_extra_packages:
