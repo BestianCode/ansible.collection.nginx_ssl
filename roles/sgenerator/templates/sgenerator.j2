@@ -3,6 +3,14 @@
 
 {% set _upstream_name = ('sg_upstream_' ~ loop.index0 ~ '_' ~ (x.dns | regex_replace('[^A-Za-z0-9_]', '_'))) %}
 {% set _backend_port = (x.backend_port if x.backend_port is defined else none) %}
+{% set _proxy_websocket = x.proxy_websocket | default(true) %}
+{% if x.proxy_connection_header is defined %}
+{% set _proxy_connection_header = ('""' if x.proxy_connection_header == '' else x.proxy_connection_header) %}
+{% elif _proxy_websocket %}
+{% set _proxy_connection_header = '$connection_upgrade' %}
+{% else %}
+{% set _proxy_connection_header = '""' %}
+{% endif %}
 
 {% if x.backend is defined and (x.backend is sequence) and (x.backend is not string) %}
     upstream {{ _upstream_name }} {
@@ -98,8 +106,10 @@
             proxy_set_header        X-Real-IP           $remote_addr;
             proxy_http_version      1.1;
 
+{% if _proxy_websocket %}
             proxy_set_header        Upgrade             $http_upgrade;
-            proxy_set_header        Connection          $connection_upgrade;
+{% endif %}
+            proxy_set_header        Connection          {{ _proxy_connection_header }};
 
 {% if x.client_max_body_size is defined %}
             proxy_read_timeout      {{x.proxy_read_timeout}};
@@ -114,7 +124,7 @@
             send_timeout            {{x.send_timeout}};
 {% endif %}
 
-            proxy_buffering         off;
+            proxy_buffering         {{ x.proxy_buffering | default('off') }};
 
 {% set _single_backend = x.backend %}
 {% if _backend_port is not none and (_single_backend is string) and (_single_backend | regex_search(':[0-9]+$')) is not truthy %}

@@ -42,6 +42,13 @@ nginx_ssl_certificate_key_filename: privkey.pem
 #
 #     # Optional upstream keepalive (only affects list backend / generated upstream{})
 #     backend_keepalive: 1024
+#     # Disable WebSocket upgrade headers for plain HTTP/SSE upstreams so nginx can
+#     # reuse upstream keepalive connections.
+#     proxy_websocket: false
+#     # Optional explicit Connection header value. Empty string renders as "".
+#     proxy_connection_header: ""
+#     # Optional proxy buffering switch. Default remains "off" for streaming.
+#     proxy_buffering: "off"
 #
 #     # Optional timeouts / limits
 #     send_timeout: 60                        # seconds; also sets keepalive_timeout
