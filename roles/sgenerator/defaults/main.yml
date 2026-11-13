@@ -67,6 +67,16 @@ nginx_ssl_certificate_key_filename: privkey.pem
 #     restrict:
 #       - uri: "^/admin"
 #       - uri: "^/internal"
+#
+#     # Optional read-only HTTP/HTTPS policy (disabled by default)
+#     read_only: true
+#     read_only_allowed_methods: [GET, HEAD]  # defaults to GET/HEAD; [] denies all methods
+#     read_only_allowed_paths:               # case-sensitive regexes matched against $uri
+#       - '^/(status|health|block|tx|tx_search)/?$'
+#     # Omitted/empty paths allow all URIs; methods are still restricted.
+#     read_only_allow_ips:                   # bypass both read-only checks
+#       - "192.0.2.10"
+#       - "2001:db8::/32"
 
 # Note: templates/sgenerator.j2 currently renders proxy_read_timeout only when
 # client_max_body_size is defined (it likely meant to check proxy_read_timeout).

@@ -3,6 +3,7 @@
 
 {% set _upstream_name = ('sg_upstream_' ~ loop.index0 ~ '_' ~ (x.dns | regex_replace('[^A-Za-z0-9_]', '_'))) %}
 {% set _backend_port = (x.backend_port if x.backend_port is defined else none) %}
+{% set _read_only = x.read_only | default(false) %}
 {% set _proxy_websocket = x.proxy_websocket | default(true) %}
 {% if x.proxy_connection_header is defined %}
 {% set _proxy_connection_header = ('""' if x.proxy_connection_header == '' else x.proxy_connection_header) %}
@@ -39,6 +40,39 @@
     }
 {% endif %}
 
+{% if _read_only %}
+    geo $remote_addr ${{ _upstream_name }}_ro_trusted {
+        default 0;
+{% for address in x.read_only_allow_ips | default([]) %}
+        {{ address }} 1;
+{% endfor %}
+    }
+
+    map $request_method ${{ _upstream_name }}_ro_method {
+        default 0;
+{% for method in x.read_only_allowed_methods | default(['GET', 'HEAD']) %}
+        {{ method }} 1;
+{% endfor %}
+    }
+
+    map $uri ${{ _upstream_name }}_ro_path {
+{% if x.read_only_allowed_paths | default([]) | length > 0 %}
+        default 0;
+{% for path in x.read_only_allowed_paths %}
+        {{ ('~' ~ path) | to_json }} 1;
+{% endfor %}
+{% else %}
+        default 1;
+{% endif %}
+    }
+
+    map "${{ _upstream_name }}_ro_trusted:${{ _upstream_name }}_ro_method:${{ _upstream_name }}_ro_path" ${{ _upstream_name }}_ro_denied {
+        default 1;
+        ~^1: 0;
+        "0:1:1" 0;
+    }
+
+{% endif %}
     server {
         listen                      443 ssl http2;
 
@@ -55,6 +89,11 @@
 
 {% endif %}
         location / {
+{% if _read_only %}
+            if (${{ _upstream_name }}_ro_denied) {
+                return 403;
+            }
+{% endif %}
 {% if x.cors is defined %}
 
             more_clear_headers      'Access-Control-Allow-Origin';

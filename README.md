@@ -62,6 +62,9 @@ And a sample `playbook`:
 
 ## Parameters
 
+Per-frontend HTTP/HTTPS read-only method/path restrictions and trusted IP
+exceptions are documented in the [sgenerator role](roles/sgenerator/README.md#read-only-http-endpoints).
+
 ```yaml
 # It's necessary disable catching of default port 80 by Nginx to make LE working
 catch_default_80: false

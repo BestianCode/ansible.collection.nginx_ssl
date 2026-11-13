@@ -1,3 +1,37 @@
+- name: Validate read-only frontend mode
+  ansible.builtin.assert:
+    that:
+      - item.read_only is boolean
+      - not item.read_only or item.mode | default('') in ['http', 'https']
+    fail_msg: "read_only must be a boolean and is supported only for HTTP/HTTPS frontends."
+  loop: "{{ nginx_frontend_configurations | default([]) }}"
+  loop_control:
+    label: "{{ item.dns | default('unnamed frontend') }}"
+  when: item.read_only is defined
+
+- name: Validate read-only request policy
+  ansible.builtin.assert:
+    that:
+      - methods is sequence and methods is not string and methods is not mapping
+      - methods | reject('string') | list | length == 0
+      - methods | reject('match', '^[A-Z]+$') | list | length == 0
+      - paths is sequence and paths is not string and paths is not mapping
+      - paths | reject('string') | list | length == 0
+      - paths | select('match', '^$') | list | length == 0
+      - paths | select('search', '[\r\n]') | list | length == 0
+      - addresses is sequence and addresses is not string and addresses is not mapping
+      - addresses | reject('string') | list | length == 0
+      - addresses | reject('match', '^[0-9a-fA-F:.]+(/[0-9]{1,3})?$') | list | length == 0
+    fail_msg: "Invalid read-only policy: use lists of uppercase HTTP methods, nonempty URI regexes, and IP addresses/CIDRs."
+  vars:
+    methods: "{{ item.read_only_allowed_methods | default(['GET', 'HEAD']) }}"
+    paths: "{{ item.read_only_allowed_paths | default([]) }}"
+    addresses: "{{ item.read_only_allow_ips | default([]) }}"
+  loop: "{{ nginx_frontend_configurations | default([]) }}"
+  loop_control:
+    label: "{{ item.dns | default('unnamed frontend') }}"
+  when: item.read_only | default(false)
+
 - name: Deploy generated sites config
   template:
     src: "{{item.src}}"
