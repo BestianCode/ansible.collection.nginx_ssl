@@ -2,6 +2,8 @@
 {% for x in nginx_frontend_configurations %}
 
 {% set _upstream_name = ('sg_upstream_' ~ loop.index0 ~ '_' ~ (x.dns | regex_replace('[^A-Za-z0-9_]', '_'))) %}
+{# Keep route variables short enough for the default Nginx variables hash bucket. #}
+{% set _route_var_prefix = 'sg_rt_' ~ loop.index0 %}
 {% set _backend_port = (x.backend_port if x.backend_port is defined else none) %}
 {% set _read_only = x.read_only | default(false) %}
 {% set _routes = x.backend_routes | default([]) %}
@@ -44,17 +46,17 @@
 {% endif %}
 
 {% for route in _routes | reverse %}
-{% set _route_name = _upstream_name ~ '_route_' ~ loop.revindex0 %}
-{% set _next = ('$' ~ _upstream_name ~ '_route_' ~ loop.revindex ~ '_target') if not loop.first else _upstream_name %}
+{% set _route_var = _route_var_prefix ~ '_' ~ loop.revindex0 %}
+{% set _next = ('$' ~ _route_var_prefix ~ '_' ~ loop.revindex) if not loop.first else _upstream_name %}
 {% set _method = '(' ~ (route.methods | join('|')) ~ ')' if route.methods is defined else '[^:]+' %}
 {% set _path = (route.path | regex_escape) ~ ('/?' if route.allow_trailing_slash | default(false) else '') %}
 {% if route.query_arg is defined %}
-    map $arg_{{ route.query_arg }} ${{ _route_name }}_query_matches {
+    map $arg_{{ route.query_arg }} ${{ _route_var }}_q {
         default 0;
         {{ ('~\\A(?:' ~ route.query_pattern ~ ')\\z') | to_json }} 1;
     }
 {% endif %}
-    map "{% if route.query_arg is defined %}${{ _route_name }}_query_matches:{% endif %}$request_method:$uri" ${{ _route_name }}_target {
+    map "{% if route.query_arg is defined %}${{ _route_var }}_q:{% endif %}$request_method:$uri" ${{ _route_var }} {
         default {{ _next }};
         {{ ('~\\A' ~ ('1:' if route.query_arg is defined else '') ~ _method ~ ':' ~ _path ~ '\\z') | to_json }} {{ _upstream_name }}{% if route.backend_port != _backend_port %}_port_{{ route.backend_port }}{% endif %};
     }
@@ -191,7 +193,7 @@
 {% endif %}
 
 {% if _routes %}
-            proxy_pass              {{x.mode}}://${{ _upstream_name }}_route_0_target;
+            proxy_pass              {{x.mode}}://${{ _route_var_prefix }}_0;
 {% elif x.backend is defined and (x.backend is sequence) and (x.backend is not string) %}
             proxy_pass              {{x.mode}}://{{ _upstream_name }};
 {% else %}
@@ -204,7 +206,7 @@
 {% set _single_backend = (_single_backend ~ ':' ~ _backend_port) %}
 {% endif %}
 {% if _routes %}
-            grpc_pass               grpc://${{ _upstream_name }}_route_0_target;
+            grpc_pass               grpc://${{ _route_var_prefix }}_0;
 {% elif x.backend is defined and (x.backend is sequence) and (x.backend is not string) %}
             grpc_pass               grpc://{{ _upstream_name }};
 {% else %}
