@@ -6,6 +6,35 @@ Ansible role for simple sites config generation from the list
 
 For a comprehensive understanding of default variables, please refer to the `defaults/main.yml` file.
 
+## Backend routes
+
+Set `backend_routes` on an HTTP, HTTPS, or gRPC frontend to select another
+port on the same backend addresses. This requires `backend_port` and a list
+of `backend` entries with an `address` and no explicit port. The first
+matching route wins; if none match, the frontend uses its default port.
+An unavailable routed upstream does not fall back to the default port.
+The same TLS, read-only policy, and proxy settings apply to all routes.
+
+```yaml
+nginx_frontend_configurations:
+  - dns: lcd.example.com
+    domain: example.com
+    mode: http
+    backend: [{address: '127.0.0.1'}]
+    backend_port: 1317
+    backend_routes:
+      - path: /cosmos/tx/v1beta1/txs
+        methods: [GET, HEAD]
+        backend_port: 11317
+```
+
+`path` is an exact, case-sensitive match against the normalized URI. Use
+`allow_trailing_slash: true` to also match a trailing slash. Omit `methods`
+to match every method. To also match a query parameter, set `query_arg` to
+its name and `query_pattern` to a case-sensitive regex for the entire raw
+`$arg_*` value, including any URL encoding. Request bodies are not inspected.
+Variable upstreams for gRPC require Nginx 1.17.8 or later.
+
 ## Read-only HTTP endpoints
 
 Set these keys on individual entries in `nginx_frontend_configurations`:

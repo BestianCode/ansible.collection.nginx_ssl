@@ -4,6 +4,7 @@
 {% set _upstream_name = ('sg_upstream_' ~ loop.index0 ~ '_' ~ (x.dns | regex_replace('[^A-Za-z0-9_]', '_'))) %}
 {% set _backend_port = (x.backend_port if x.backend_port is defined else none) %}
 {% set _read_only = x.read_only | default(false) %}
+{% set _routes = x.backend_routes | default([]) %}
 {% set _proxy_websocket = x.proxy_websocket | default(true) %}
 {% if x.proxy_connection_header is defined %}
 {% set _proxy_connection_header = ('""' if x.proxy_connection_header == '' else x.proxy_connection_header) %}
@@ -14,31 +15,50 @@
 {% endif %}
 
 {% if x.backend is defined and (x.backend is sequence) and (x.backend is not string) %}
-    upstream {{ _upstream_name }} {
+{% for port in ([_backend_port] + (_routes | map(attribute='backend_port') | list)) | unique %}
+    upstream {{ _upstream_name }}{% if not loop.first %}_port_{{ port }}{% endif %} {
 {% for b in x.backend %}
 {% if b is mapping %}
 {% if b.address is defined %}
 {% set _addr = b.address %}
-{% if _backend_port is not none and (_addr | regex_search(':[0-9]+$')) is not truthy %}
-{% set _addr = (_addr ~ ':' ~ _backend_port) %}
+{% if port is not none and (_addr | regex_search(':[0-9]+$')) is not truthy %}
+{% set _addr = (_addr ~ ':' ~ port) %}
 {% endif %}
     server {{ _addr }}{% if b.params is defined %} {{ b.params }}{% endif %};
 {% elif b.host is defined and b.port is defined %}
         server {{ b.host }}:{{ b.port }}{% if b.params is defined %} {{ b.params }}{% endif %};
-{% elif b.host is defined and _backend_port is not none %}
-    server {{ b.host }}:{{ _backend_port }}{% if b.params is defined %} {{ b.params }}{% endif %};
+{% elif b.host is defined and port is not none %}
+    server {{ b.host }}:{{ port }}{% if b.params is defined %} {{ b.params }}{% endif %};
 {% endif %}
 {% else %}
 {% set _addr = b %}
-{% if _backend_port is not none and (_addr | regex_search(':[0-9]+$')) is not truthy %}
-{% set _addr = (_addr ~ ':' ~ _backend_port) %}
+{% if port is not none and (_addr | regex_search(':[0-9]+$')) is not truthy %}
+{% set _addr = (_addr ~ ':' ~ port) %}
 {% endif %}
     server {{ _addr }};
 {% endif %}
 {% endfor %}
     keepalive {{ x.backend_keepalive | default(1024) }};
     }
+{% endfor %}
 {% endif %}
+
+{% for route in _routes | reverse %}
+{% set _route_name = _upstream_name ~ '_route_' ~ loop.revindex0 %}
+{% set _next = ('$' ~ _upstream_name ~ '_route_' ~ loop.revindex ~ '_target') if not loop.first else _upstream_name %}
+{% set _method = '(' ~ (route.methods | join('|')) ~ ')' if route.methods is defined else '[^:]+' %}
+{% set _path = (route.path | regex_escape) ~ ('/?' if route.allow_trailing_slash | default(false) else '') %}
+{% if route.query_arg is defined %}
+    map $arg_{{ route.query_arg }} ${{ _route_name }}_query_matches {
+        default 0;
+        {{ ('~\\A(?:' ~ route.query_pattern ~ ')\\z') | to_json }} 1;
+    }
+{% endif %}
+    map "{% if route.query_arg is defined %}${{ _route_name }}_query_matches:{% endif %}$request_method:$uri" ${{ _route_name }}_target {
+        default {{ _next }};
+        {{ ('~\\A' ~ ('1:' if route.query_arg is defined else '') ~ _method ~ ':' ~ _path ~ '\\z') | to_json }} {{ _upstream_name }}{% if route.backend_port != _backend_port %}_port_{{ route.backend_port }}{% endif %};
+    }
+{% endfor %}
 
 {% if _read_only %}
     geo $remote_addr ${{ _upstream_name }}_ro_trusted {
@@ -170,7 +190,9 @@
 {% set _single_backend = (_single_backend ~ ':' ~ _backend_port) %}
 {% endif %}
 
-{% if x.backend is defined and (x.backend is sequence) and (x.backend is not string) %}
+{% if _routes %}
+            proxy_pass              {{x.mode}}://${{ _upstream_name }}_route_0_target;
+{% elif x.backend is defined and (x.backend is sequence) and (x.backend is not string) %}
             proxy_pass              {{x.mode}}://{{ _upstream_name }};
 {% else %}
             proxy_pass              {{x.mode}}://{{ _single_backend }};
@@ -181,7 +203,9 @@
 {% if _backend_port is not none and (_single_backend is string) and (_single_backend | regex_search(':[0-9]+$')) is not truthy %}
 {% set _single_backend = (_single_backend ~ ':' ~ _backend_port) %}
 {% endif %}
-{% if x.backend is defined and (x.backend is sequence) and (x.backend is not string) %}
+{% if _routes %}
+            grpc_pass               grpc://${{ _upstream_name }}_route_0_target;
+{% elif x.backend is defined and (x.backend is sequence) and (x.backend is not string) %}
             grpc_pass               grpc://{{ _upstream_name }};
 {% else %}
             grpc_pass               {{x.mode}}://{{ _single_backend }};

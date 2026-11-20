@@ -32,6 +32,47 @@
     label: "{{ item.dns | default('unnamed frontend') }}"
   when: item.read_only | default(false)
 
+- name: Validate backend route frontend
+  ansible.builtin.assert:
+    that:
+      - item.backend_routes is sequence and item.backend_routes is not string and item.backend_routes is not mapping
+      - item.backend_routes | reject('mapping') | list | length == 0
+      - item.mode | default('') in ['http', 'https', 'grpc']
+      - item.backend_port is defined and item.backend_port is integer and 1 <= item.backend_port <= 65535
+      - item.backend is defined and item.backend is sequence and item.backend is not string and item.backend is not mapping
+      - item.backend | length > 0
+      - item.backend | reject('mapping') | list | length == 0
+      - item.backend | rejectattr('address', 'defined') | list | length == 0
+      - item.backend | selectattr('port', 'defined') | list | length == 0
+      - item.backend | map(attribute='address') | reject('string') | list | length == 0
+      - item.backend | map(attribute='address') | reject('match', '^(?:[A-Za-z0-9._-]+|\[[0-9A-Fa-f:.]+\])\Z') | list | length == 0
+    fail_msg: "backend_routes requires HTTP, HTTPS, or gRPC, a default backend_port, and backend address entries without explicit ports."
+  loop: "{{ nginx_frontend_configurations | default([]) }}"
+  loop_control:
+    label: "{{ item.dns | default('unnamed frontend') }}"
+  when: item.backend_routes is defined
+
+- name: Validate backend route rules
+  ansible.builtin.assert:
+    that:
+      - route.path is defined and route.path is string and route.path is match('^/[^?#\x00-\x20]*\Z')
+      - route.backend_port is defined and route.backend_port is integer and 1 <= route.backend_port <= 65535
+      - route.allow_trailing_slash | default(false) is boolean
+      - not route.allow_trailing_slash | default(false) or not route.path.endswith('/')
+      - methods is sequence and methods is not string and methods is not mapping and methods | length > 0
+      - methods | reject('string') | list | length == 0
+      - methods | reject('match', '^[A-Z]+\Z') | list | length == 0
+      - (route.query_arg is defined) == (route.query_pattern is defined)
+      - route.query_arg is not defined or (route.query_arg is string and route.query_arg is match('^[a-z0-9_]+\Z'))
+      - route.query_pattern is not defined or (route.query_pattern is string and route.query_pattern | length > 0 and route.query_pattern is not search('[\r\n]'))
+    fail_msg: "Invalid backend route: use a literal URI path, a valid port, and optional methods or a query_arg/query_pattern pair."
+  vars:
+    route: "{{ item.1 }}"
+    methods: "{{ route.methods | default(['GET']) }}"
+  loop: "{{ nginx_frontend_configurations | default([]) | subelements('backend_routes', skip_missing=True) }}"
+  loop_control:
+    label: "{{ item.0.dns | default('unnamed frontend') }} {{ route.path | default('missing path') }}"
+
 - name: Deploy generated sites config
   template:
     src: "{{item.src}}"
